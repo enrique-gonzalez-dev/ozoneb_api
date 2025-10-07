@@ -1,0 +1,25 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+admin_user:
+  id: 550e8400-e29b-41d4-a716-446655440001
+  name: Admin
+  last_name: User
+  email: admin@test.com
+  encrypted_password: <%= Devise::Encryptor.digest(User, 'password123') %>
+  role: admin
+
+supervisor_user:
+  id: 550e8400-e29b-41d4-a716-446655440002
+  name: Supervisor
+  last_name: User
+  email: supervisor@test.com
+  encrypted_password: <%= Devise::Encryptor.digest(User, 'password123') %>
+  role: supervisor
+
+operation_user:
+  id: 550e8400-e29b-41d4-a716-446655440003
+  name: Operation
+  last_name: User
+  email: operation@test.com
+  encrypted_password: <%= Devise::Encryptor.digest(User, 'password123') %>
+  role: operation
