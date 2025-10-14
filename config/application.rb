@@ -29,6 +29,14 @@ module OzonebApi
     # Skip views, helpers and assets when generating a new resource.
     config.api_only = true
 
+    # Add middleware for file uploads in API mode
+    config.middleware.use ActionDispatch::Flash
+    config.middleware.use Rack::MethodOverride
+    config.middleware.use ActionDispatch::Cookies
+
+    # Configure parameters parsing
+    config.force_ssl = false
+
     # Configure generators to use UUID as primary key
     config.generators do |g|
       g.orm :active_record, primary_key_type: :uuid

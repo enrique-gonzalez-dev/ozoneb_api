@@ -1,27 +1,58 @@
-# Ozone Benefits API
+# Ozone Benefits - Sistema de Gestión Empresarial(API)
 
-API RESTful para el sistema de gestión de beneficios Ozone, desarrollada con Ruby on Rails.
+Una API REST robusta construida con Ruby on Rails 8.0 para la gestión de usuarios y autenticación empresarial.
 
-## 🚀 Características
+## Descripción General
 
-- **Autenticación JWT**: Sistema de autenticación basado en tokens JSON Web Token
-- **Gestión de Usuarios**: CRUD completo para usuarios con control de roles
-- **Autorización por Roles**: Sistema de permisos basado en roles (admin, supervisor, operation)
-- **Serializers**: Respuestas controladas que no exponen información sensible
-- **API RESTful**: Endpoints bien estructurados siguiendo convenciones REST
+Ozoneb API es una aplicación backend diseñada para proporcionar servicios de autenticación y gestión de usuarios de manera segura y escalable. La API implementa estándares de la industria para autenticación JWT, gestión de roles y recuperación de contraseñas.
 
-## 📋 Requisitos
+## Características Principales
 
-- Ruby 3.2+
-- Rails 7.1+
-- PostgreSQL
-- Bundler
+### Autenticación y Seguridad
+- Autenticación basada en JWT (JSON Web Tokens)
+- Integración con Devise para manejo seguro de usuarios
+- Recuperación de contraseñas vía email
+- Sistema de roles multi-nivel (Admin, Operation, Supervisor)
+- Configuración CORS para integración con aplicaciones frontend
 
-## 🛠️ Instalación
+### Gestión de Usuarios
+- CRUD completo para usuarios
+- Sistema de estados (Activo/Inactivo)
+- Soporte para avatares de usuario con Active Storage
+- Validaciones robustas de datos
+- Paginación de resultados con Kaminari
+
+### Arquitectura
+- API RESTful con versionado (v1)
+- Arquitectura MVC estándar de Rails
+- Serialización de datos estructurada
+- Manejo centralizado de errores
+- Health checks para monitoreo
+
+## Especificaciones Técnicas
+
+### Tecnologías Utilizadas
+- **Framework**: Ruby on Rails 8.0.3
+- **Base de Datos**: PostgreSQL
+- **Servidor Web**: Puma
+- **Autenticación**: Devise + Devise-JWT
+- **Almacenamiento**: Active Storage
+- **Caché**: Solid Cache
+- **Cola de Trabajos**: Solid Queue
+- **WebSockets**: Solid Cable
+
+### Requisitos del Sistema
+- Ruby 3.0 o superior
+- PostgreSQL 12 o superior
+- Docker (opcional, para despliegue)
+
+## Instalación y Configuración
+
+### Configuración Local
 
 1. **Clonar el repositorio**
    ```bash
-   git clone <repository-url>
+   git clone git@github.com:grupo-ozonebeneifts/ozoneb_api.git
    cd ozoneb_api
    ```
 
@@ -37,262 +68,174 @@ API RESTful para el sistema de gestión de beneficios Ozone, desarrollada con Ru
    rails db:seed
    ```
 
-4. **Iniciar el servidor**
+4. **Configurar variables de entorno**
+   ```bash
+   cp .env.example .env
+   # Editar .env con las configuraciones apropiadas
+   ```
+
+5. **Iniciar servidor**
    ```bash
    rails server
    ```
 
-El servidor estará disponible en `http://localhost:3000`
+### Despliegue con Docker
 
-## 🔐 Autenticación
-
-### Login
-```http
-POST /api/v1/login
-Content-Type: application/json
-
-{
-  "email": "admin@mail.com",
-  "password": "password"
-}
+```bash
+docker build -t ozoneb-api .
+docker run -p 3000:3000 ozoneb-api
 ```
 
-**Respuesta exitosa:**
+### Despliegue con Kamal
+
+```bash
+kamal setup
+kamal deploy
+```
+
+## Estructura de la API
+
+### Endpoints Principales
+
+#### Autenticación
+- `POST /api/v1/login` - Iniciar sesión
+- `DELETE /api/v1/logout` - Cerrar sesión
+- `POST /api/v1/password/forgot` - Solicitar recuperación de contraseña
+- `PUT /api/v1/password/reset` - Restablecer contraseña
+
+#### Gestión de Usuarios
+- `GET /api/v1/users` - Listar usuarios (paginado)
+- `GET /api/v1/users/:id` - Obtener usuario específico
+- `POST /api/v1/users` - Crear nuevo usuario
+- `PUT /api/v1/users/:id` - Actualizar usuario
+- `DELETE /api/v1/users/:id` - Eliminar usuario
+- `PATCH /api/v1/users/:id/update_password` - Cambiar contraseña
+- `PATCH /api/v1/users/:id/update_avatar` - Actualizar avatar
+
+#### Monitoreo
+- `GET /api/v1/health` - Estado de la API
+- `GET /up` - Health check del sistema
+
+### Formato de Respuesta
+
+La API devuelve respuestas en formato JSON con la siguiente estructura:
+
 ```json
 {
-  "user": {
-    "id": "uuid",
-    "name": "Admin",
-    "last_name": "User",
-    "role": "admin",
-    "email": "admin@mail.com"
-  },
-  "token": "jwt_token_here"
-}
-```
-
-### Logout
-```http
-DELETE /api/v1/logout
-Authorization: Bearer jwt_token_here
-```
-
-## 👥 Gestión de Usuarios
-
-### Listar Usuarios
-```http
-GET /api/v1/users
-Authorization: Bearer jwt_token_here
-```
-
-**Permisos:** Solo `admin` y `supervisor`
-
-### Obtener Usuario Específico
-```http
-GET /api/v1/users/:id
-Authorization: Bearer jwt_token_here
-```
-
-### Crear Usuario
-```http
-POST /api/v1/users
-Authorization: Bearer jwt_token_here
-Content-Type: application/json
-
-{
-  "user": {
-    "name": "Nuevo",
-    "last_name": "Usuario",
-    "email": "nuevo@mail.com",
-    "password": "password123",
-    "password_confirmation": "password123",
-    "role": "operation"
-  }
-}
-```
-
-**Permisos:** Solo `admin` y `supervisor`
-
-### Actualizar Usuario
-```http
-PUT /api/v1/users/:id
-Authorization: Bearer jwt_token_here
-Content-Type: application/json
-
-{
-  "user": {
-    "name": "Nombre Actualizado",
-    "last_name": "Apellido Actualizado",
-    "email": "email@actualizado.com",
-    "role": "supervisor"
-  }
-}
-```
-
-**Permisos:** 
-- Los usuarios pueden actualizar su propia información (excepto rol)
-- Solo `admin` y `supervisor` pueden actualizar cualquier usuario y cambiar roles
-
-### Eliminar Usuario
-```http
-DELETE /api/v1/users/:id
-Authorization: Bearer jwt_token_here
-```
-
-**Permisos:** Solo `admin` y `supervisor`
-
-## 🎭 Roles de Usuario
-
-| Rol | Valor | Permisos |
-|-----|-------|----------|
-| `admin` | 0 | Acceso completo a todas las funciones |
-| `operation` | 1 | Acceso limitado, solo lectura |
-| `supervisor` | 2 | Puede gestionar usuarios, acceso amplio |
-
-## 📊 Formato de Respuestas
-
-### Respuesta Exitosa
-```json
-{
-  "status": {
-    "code": 200,
-    "message": "Operation completed successfully"
-  },
-  "data": {
-    "id": "uuid",
-    "name": "Usuario",
-    "last_name": "Ejemplo",
-    "role": "operation",
-    "email": "usuario@mail.com"
-  }
-}
-```
-
-### Respuesta de Error
-```json
-{
-  "status": {
-    "message": "Error description"
-  }
+  "data": {},
+  "message": "string",
+  "status": "success|error",
+  "errors": []
 }
 ```
 
 ### Códigos de Estado HTTP
 
-- `200` - OK
-- `201` - Created
-- `401` - Unauthorized
-- `403` - Forbidden
-- `404` - Not Found
-- `422` - Unprocessable Entity
+- `200 OK` - Solicitud exitosa
+- `201 Created` - Recurso creado exitosamente
+- `400 Bad Request` - Error en los datos enviados
+- `401 Unauthorized` - No autenticado
+- `403 Forbidden` - No autorizado
+- `404 Not Found` - Recurso no encontrado
+- `422 Unprocessable Entity` - Error de validación
+- `500 Internal Server Error` - Error interno del servidor
 
-## 🛡️ Seguridad
+## Modelos de Datos
 
-- **JWT Authentication**: Tokens con expiración configurable
-- **Autorización por Roles**: Control granular de permisos
-- **Serializers**: Solo se exponen campos seguros en las respuestas
-- **Validaciones**: Validación completa de datos de entrada
-- **CORS**: Configurado para peticiones cross-origin
-
-## 🔧 Herramientas de Desarrollo
-
-### Health Check
-```http
-GET /api/v1/health
+### Usuario
+```ruby
+{
+  id: UUID,
+  email: String,
+  name: String,
+  last_name: String,
+  role: Enum [admin, operation, supervisor],
+  status: Enum [active, inactive],
+  created_at: DateTime,
+  updated_at: DateTime
+}
 ```
 
-### Rails Health Check
-```http
-GET /up
-```
+## Seguridad
 
-## 🧪 Testing
+### Medidas Implementadas
+- Autenticación JWT con expiración configurable
+- Validación de datos de entrada
+- Sanitización de parámetros
+- Headers de seguridad configurados
+- Rate limiting (configurable)
+- Logging de accesos y errores
 
+### Variables de Entorno Requeridas
+- `DATABASE_URL` - Conexión a la base de datos
+- `SECRET_KEY_BASE` - Clave secreta de Rails
+- `JWT_SECRET_KEY` - Clave para firmar tokens JWT
+- `SMTP_*` - Configuración para envío de emails
+
+## Testing
+
+### Ejecutar Suite de Pruebas
 ```bash
-# Ejecutar todas las pruebas
 rails test
-
-# Ejecutar pruebas específicas
-rails test test/models/user_test.rb
 ```
 
-## 📝 Ejemplos con cURL
+### Cobertura de Pruebas
+- Modelos: Validaciones y métodos de instancia
+- Controladores: Endpoints y autenticación
+- Integración: Flujos completos de usuario
+- Mailers: Envío de notificaciones
 
-### 1. Login y obtener token
+## Herramientas de Desarrollo
+
+### Análisis de Código
 ```bash
-curl -X POST http://localhost:3000/api/v1/login \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "admin@mail.com",
-    "password": "password"
-  }'
+rubocop                    # Análisis de estilo
+brakeman                   # Análisis de seguridad
 ```
 
-### 2. Crear un nuevo usuario
+### Debugging
 ```bash
-curl -X POST http://localhost:3000/api/v1/users \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  -d '{
-    "user": {
-      "name": "Juan",
-      "last_name": "Pérez",
-      "email": "juan@mail.com",
-      "password": "password123",
-      "password_confirmation": "password123",
-      "role": "operation"
-    }
-  }'
+rails console              # Consola interactiva
+rails dbconsole           # Consola de base de datos
 ```
 
-### 3. Listar todos los usuarios
-```bash
-curl -X GET http://localhost:3000/api/v1/users \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN"
-```
+## Monitoreo y Logs
 
-### 4. Actualizar un usuario
-```bash
-curl -X PUT http://localhost:3000/api/v1/users/USER_ID \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  -d '{
-    "user": {
-      "name": "Juan Carlos",
-      "role": "supervisor"
-    }
-  }'
-```
+### Health Checks
+- Endpoint `/api/v1/health` para monitoreo automático
+- Verificación de conectividad a base de datos
+- Estado de servicios críticos
 
-## 🏗️ Arquitectura
+### Logging
+- Logs estructurados en formato JSON
+- Rotación automática de archivos de log
+- Diferentes niveles de logging por ambiente
 
-```
-app/
-├── controllers/
-│   └── api/v1/          # Controladores de la API
-├── models/              # Modelos de datos
-├── serializers/         # Serializers para respuestas
-│   └── api/v1/
-├── services/            # Servicios de negocio
-└── lib/                 # Librerías personalizadas
-```
+## Contribución
 
-## 📋 TODO
+### Estándares de Código
+- Seguir guías de estilo de Ruby community
+- Pruebas unitarias para toda nueva funcionalidad
+- Documentación actualizada en cada cambio
+- Code review obligatorio para cambios principales
 
-- [ ] Implementar paginación en listados
-- [ ] Agregar filtros de búsqueda
-- [ ] Implementar rate limiting
-- [ ] Agregar logs de auditoría
-- [ ] Documentación con Swagger/OpenAPI
+### Workflow de Desarrollo
+1. Crear branch desde main
+2. Implementar funcionalidad con pruebas
+3. Ejecutar suite de pruebas y análisis de código
+4. Crear pull request con descripción detallada
+5. Code review y merge
 
-## 🤝 Contribución
+## Licencia
 
-1. Fork el proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/nueva-funcionalidad`)
-3. Commit tus cambios (`git commit -am 'Agrega nueva funcionalidad'`)
-4. Push a la rama (`git push origin feature/nueva-funcionalidad`)
-5. Crea un Pull Request
+Propiedad de Grupo Ozone Benefits. Todos los derechos reservados.
 
-## 📄 Licencia
+## Contacto
 
-Este proyecto está bajo la Licencia MIT.
+Para soporte técnico o consultas sobre la API, contactar al equipo de desarrollo.
+
+---
+
+**Versión**: 1.0.0  
+**Última actualización**: Octubre 2024  
+**Compatibilidad**: Ruby 3.0+, Rails 8.0+

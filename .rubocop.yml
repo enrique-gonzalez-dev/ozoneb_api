@@ -14,3 +14,6 @@ Style/StringLiterals:
 # Set maximum line length to 120 characters
 Layout/LineLength:
   Max: 120
+
+Layout/SpaceInsideArrayLiteralBrackets:
+  Enabled: false

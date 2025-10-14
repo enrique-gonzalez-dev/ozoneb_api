@@ -1,6 +1,18 @@
 class ApplicationController < ActionController::API
+  include ActionController::Cookies
+
   before_action :authenticate_request
   attr_reader :current_user
+
+  # Handle parameter parsing errors gracefully
+  rescue_from ActionDispatch::Http::Parameters::ParseError do |exception|
+    Rails.logger.error "Parameter parsing error: #{exception.message}"
+    render json: { 
+      status: { 
+        message: 'Invalid request format. Please ensure you are sending the correct content type.' 
+      } 
+    }, status: :bad_request
+  end
 
   private
 

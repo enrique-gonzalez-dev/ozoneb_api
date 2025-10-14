@@ -1,0 +1,25 @@
+¡Bienvenido a Ozone Benefits!
+
+Hola <%= @user.name %> <%= @user.last_name %>,
+
+Has sido invitado a formar parte de la plataforma Ozone Benefits. Tu cuenta ha sido creada exitosamente con el rol de <%= @user.role.humanize %>.
+
+CREDENCIALES DE ACCESO:
+------------------------
+Email: <%= @user.email %>
+Contraseña temporal: <%= @temporary_password %>
+
+IMPORTANTE: Te recomendamos cambiar tu contraseña temporal después de tu primer inicio de sesión por motivos de seguridad.
+
+Para acceder a la plataforma, visita: <%= @login_url %>
+
+Si tienes alguna pregunta o necesitas ayuda, no dudes en contactar a nuestro equipo de soporte.
+
+¡Esperamos que tengas una excelente experiencia con Ozone Benefits!
+
+Saludos,
+El equipo de Ozone Benefits
+
+---
+Este es un correo automático, por favor no respondas a este mensaje.
+© <%= Date.current.year %> Ozone Benefits. Todos los derechos reservados.
