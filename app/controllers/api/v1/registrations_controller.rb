@@ -1,10 +1,26 @@
 class Api::V1::RegistrationsController < Devise::RegistrationsController
   respond_to :json
-  before_action :authenticate_user!, only: [ :create ]
-  before_action :check_admin_or_supervisor, only: [ :create ]
+  before_action :authenticate_user!
+  before_action :check_admin_or_supervisor
+
+  def new
+    render json: { status: { message: 'El registro está deshabilitado. Solo los administradores o supervisores pueden crear usuarios.' } }, status: :forbidden
+  end
+
 
   def create
-    build_resource(sign_up_params)
+    user_params = sign_up_params
+    # Lógica de asignación de rol según el rol del usuario actual
+    if current_user.admin?
+      # Admin puede asignar cualquier rol
+      assigned_role = params[:user][:role] if params[:user][:role].present?
+      user_params[:role] = assigned_role if assigned_role.present? && User.roles.keys.include?(assigned_role)
+    elsif current_user.supervisor?
+      # Supervisor solo puede crear usuarios operativos
+      user_params[:role] = 'operation'
+    end
+
+    build_resource(user_params)
 
     if resource.save
       render json: {
@@ -21,13 +37,19 @@ class Api::V1::RegistrationsController < Devise::RegistrationsController
   private
 
   def sign_up_params
-    params.require(:user).permit(:name, :last_name, :email, :password, :password_confirmation, :role)
+    if current_user&.admin?
+      # Solo los admins pueden asignar el rol
+      params.require(:user).permit(:name, :last_name, :email, :password, :password_confirmation, :role)
+    else
+      # Supervisores y otros no pueden asignar el rol
+      params.require(:user).permit(:name, :last_name, :email, :password, :password_confirmation)
+    end
   end
 
   def check_admin_or_supervisor
     unless current_user&.can_create_users?
       render json: {
-        status: { message: "You don't have permission to create users." }
+        status: { message: 'No tienes permiso para crear usuarios.' }
       }, status: :forbidden
     end
   end

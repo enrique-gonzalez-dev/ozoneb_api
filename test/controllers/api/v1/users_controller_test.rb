@@ -111,7 +111,7 @@ class Api::V1::UsersControllerTest < ActionDispatch::IntegrationTest
     assert_response :created
     response_json = JSON.parse(response.body)
     assert_equal 200, response_json['status']['code']
-    assert_equal 'User created successfully.', response_json['status']['message']
+    assert_equal 'User created successfully. Invitation email sent.', response_json['status']['message']
     assert_equal 'New', response_json['data']['name']
     assert_equal 'operation', response_json['data']['role']
   end

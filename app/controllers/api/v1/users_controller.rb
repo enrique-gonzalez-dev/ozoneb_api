@@ -5,6 +5,7 @@ class Api::V1::UsersController < ApplicationController
 
   def index
     @users = User.search(search_param)
+    @users = apply_status_filter(@users)
     @users = apply_sorting(@users)
     @users = @users.page(page_param).per(per_page_param)
 
@@ -226,15 +227,21 @@ class Api::V1::UsersController < ApplicationController
   end
 
   def user_params
-    if current_user.can_create_users?
+    if current_user.admin?
       params.require(:user).permit(:name, :last_name, :email, :role, :status, :avatar)
+    elsif current_user.can_create_users?
+      params.require(:user).permit(:name, :last_name, :email, :status, :avatar)
     else
       params.require(:user).permit(:name, :last_name, :email, :avatar)
     end
   end
 
   def user_params_for_creation
-    params.require(:user).permit(:name, :last_name, :email, :role, :password, :password_confirmation, :avatar)
+    if current_user.admin?
+      params.require(:user).permit(:name, :last_name, :email, :role, :password, :password_confirmation, :avatar)
+    else
+      params.require(:user).permit(:name, :last_name, :email, :password, :password_confirmation, :avatar)
+    end
   end
 
   def password_params
@@ -289,5 +296,26 @@ class Api::V1::UsersController < ApplicationController
     else
       relation.order(created_at: :desc) # Default sorting
     end
+  end
+
+  # Apply status filter to the query
+  def apply_status_filter(relation)
+    status = status_param
+
+    if status.present? && valid_status?(status)
+      relation.where(status: status)
+    else
+      relation
+    end
+  end
+
+  # Status parameter
+  def status_param
+    params[:status]&.to_s&.strip&.downcase
+  end
+
+  # Valid status values
+  def valid_status?(status)
+    %w[active inactive].include?(status)
   end
 end

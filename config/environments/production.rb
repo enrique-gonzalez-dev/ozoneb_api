@@ -23,13 +23,13 @@ Rails.application.configure do
 
   # Configure default URL options for URL generation (needed for Active Storage URLs)
   # Set these via environment variables in production
-  config.action_controller.default_url_options = { 
-    host: ENV.fetch('APP_HOST', 'localhost'), 
+  config.action_controller.default_url_options = {
+    host: ENV.fetch('APP_HOST', 'localhost'),
     port: ENV.fetch('APP_PORT', '3000'),
     protocol: 'https'
   }
-  config.action_mailer.default_url_options = { 
-    host: ENV.fetch('APP_HOST', 'localhost'), 
+  config.action_mailer.default_url_options = {
+    host: ENV.fetch('APP_HOST', 'localhost'),
     port: ENV.fetch('APP_PORT', '3000'),
     protocol: 'https'
   }

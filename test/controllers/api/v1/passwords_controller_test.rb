@@ -5,8 +5,8 @@ class Api::V1::PasswordsControllerTest < ActionDispatch::IntegrationTest
     @user = users(:user_one)
   end
 
-  test "should send password reset instructions for valid email" do
-    post "/api/v1/password/forgot", params: {
+  test 'should send password reset instructions for valid email' do
+    post '/api/v1/password/forgot', params: {
       user: { email: @user.email }
     }, as: :json
 
@@ -16,8 +16,8 @@ class Api::V1::PasswordsControllerTest < ActionDispatch::IntegrationTest
     assert_equal 'Se ha enviado un correo con instrucciones para recuperar tu contraseña.', json_response['message']
   end
 
-  test "should return error for invalid email" do
-    post "/api/v1/password/forgot", params: {
+  test 'should return error for invalid email' do
+    post '/api/v1/password/forgot', params: {
       user: { email: 'nonexistent@example.com' }
     }, as: :json
 
@@ -27,13 +27,15 @@ class Api::V1::PasswordsControllerTest < ActionDispatch::IntegrationTest
     assert_equal 'No se encontró un usuario con ese correo electrónico.', json_response['message']
   end
 
-  test "should reset password with valid token" do
-    @user.send_reset_password_instructions
-    reset_token = @user.reload.reset_password_token
+  test 'should reset password with valid token' do
+    raw_token, enc_token = Devise.token_generator.generate(User, :reset_password_token)
+    @user.reset_password_token = enc_token
+    @user.reset_password_sent_at = Time.current
+    @user.save(validate: false)
 
-    put "/api/v1/password/reset", params: {
+    put '/api/v1/password/reset', params: {
       user: {
-        reset_password_token: reset_token,
+        reset_password_token: raw_token,
         password: 'newpassword123',
         password_confirmation: 'newpassword123'
       }
@@ -45,8 +47,8 @@ class Api::V1::PasswordsControllerTest < ActionDispatch::IntegrationTest
     assert_equal 'Tu contraseña ha sido actualizada exitosamente.', json_response['message']
   end
 
-  test "should return error for invalid reset token" do
-    put "/api/v1/password/reset", params: {
+  test 'should return error for invalid reset token' do
+    put '/api/v1/password/reset', params: {
       user: {
         reset_password_token: 'invalid_token',
         password: 'newpassword123',

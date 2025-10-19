@@ -32,21 +32,21 @@ class Api::V1::UserSerializer
           port: @request.port,
           protocol: @request.protocol.chomp('://')
         }
-        
-        return rails_blob_url(@user.avatar, url_options.merge(only_path: false))
+
+        rails_blob_url(@user.avatar, url_options.merge(only_path: false))
       else
         # Fallback: generate with default configuration
-        return rails_blob_url(@user.avatar, only_path: false)
+        rails_blob_url(@user.avatar, only_path: false)
       end
     rescue => e
       Rails.logger.error "Error generating avatar URL: #{e.message}"
-      
+
       # Final fallback: return relative path
       begin
-        return rails_blob_path(@user.avatar)
+        rails_blob_path(@user.avatar)
       rescue => fallback_error
         Rails.logger.error "Error generating avatar path: #{fallback_error.message}"
-        return nil
+        nil
       end
     end
   end

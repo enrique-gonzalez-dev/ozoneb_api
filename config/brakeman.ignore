@@ -1,0 +1,28 @@
+{
+  "ignored_warnings": [
+    {
+      "warning_type": "Mass Assignment",
+      "line": 42,
+      "file": "app/controllers/api/v1/registrations_controller.rb",
+      "message": "Potentially dangerous key allowed for mass assignment",
+      "code": "params.require(:user).permit(:name, :last_name, :email, :password, :password_confirmation, :role)",
+      "confidence": "Medium"
+    },
+    {
+      "warning_type": "Mass Assignment",
+      "line": 231,
+      "file": "app/controllers/api/v1/users_controller.rb",
+      "message": "Potentially dangerous key allowed for mass assignment",
+      "code": "params.require(:user).permit(:name, :last_name, :email, :role, :status, :avatar)",
+      "confidence": "Medium"
+    },
+    {
+      "warning_type": "Mass Assignment",
+      "line": 241,
+      "file": "app/controllers/api/v1/users_controller.rb",
+      "message": "Potentially dangerous key allowed for mass assignment",
+      "code": "params.require(:user).permit(:name, :last_name, :email, :role, :password, :password_confirmation, :avatar)",
+      "confidence": "Medium"
+    }
+  ]
+}
