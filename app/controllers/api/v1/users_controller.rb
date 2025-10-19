@@ -1,7 +1,8 @@
 class Api::V1::UsersController < ApplicationController
   before_action :authenticate_user!
   before_action :set_user, only: [ :show, :update, :destroy, :update_avatar ]
-  before_action :check_admin_or_supervisor, only: [ :index, :create, :destroy ]
+  before_action :check_admin_or_supervisor, only: [ :index, :create ]
+  before_action :check_admin, only: [ :destroy ]
 
   def index
     @users = User.search(search_param)
@@ -68,14 +69,29 @@ class Api::V1::UsersController < ApplicationController
   end
 
   def destroy
-    if @user.destroy
-      render json: {
-        status: { code: 200, message: 'User deleted successfully.' }
-      }, status: :ok
+    # Solo los administradores pueden eliminar usuarios
+    if current_user.admin?
+      if @user.destroy
+        render json: {
+          status: { code: 200, message: 'User deleted successfully.' }
+        }, status: :ok
+      else
+        render json: {
+          status: { message: "User couldn't be deleted." }
+        }, status: :unprocessable_entity
+      end
     else
       render json: {
-        status: { message: "User couldn't be deleted." }
-      }, status: :unprocessable_entity
+        status: { message: "You don't have permission to delete users. Only admins can delete users." }
+      }, status: :forbidden
+    end
+  end
+  # Solo los administradores pueden eliminar usuarios
+  def check_admin
+    unless current_user&.admin?
+      render json: {
+        status: { message: "You don't have permission to perform this action. Only admins can delete users." }
+      }, status: :forbidden
     end
   end
 

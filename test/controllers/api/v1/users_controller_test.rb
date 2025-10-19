@@ -288,7 +288,7 @@ class Api::V1::UsersControllerTest < ActionDispatch::IntegrationTest
     assert_equal 'User deleted successfully.', response_json['status']['message']
   end
 
-  test 'should destroy user as supervisor' do
+  test 'should not destroy user as supervisor' do
     user_to_delete = User.create!(
       name: 'To Delete',
       last_name: 'User',
@@ -297,12 +297,14 @@ class Api::V1::UsersControllerTest < ActionDispatch::IntegrationTest
       role: 'operation'
     )
 
-    assert_difference 'User.count', -1 do
+    assert_no_difference 'User.count' do
       delete "/api/v1/users/#{user_to_delete.id}",
              headers: auth_headers(@supervisor_token)
     end
 
-    assert_response :ok
+    assert_response :forbidden
+    response_json = JSON.parse(response.body)
+    assert_includes response_json['status']['message'], 'Only admins can delete users'
   end
 
   test 'should not destroy user as operation user' do
