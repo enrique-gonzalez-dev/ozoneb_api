@@ -5,8 +5,12 @@ class Api::V1::SessionsController < ApplicationController
     user = User.find_by(email: params[:email])
 
     if user&.valid_password?(params[:password])
-      token = generate_jwt_token(user)
-      render json: { user: Api::V1::UserSerializer.new(user).as_json, token: token }, status: :ok
+      if user.active?
+        token = generate_jwt_token(user)
+        render json: { user: Api::V1::UserSerializer.new(user).as_json, token: token }, status: :ok
+      else
+        render json: { error: 'Invalid email or password' }, status: :unauthorized
+      end
     else
       render json: { error: 'Invalid email or password' }, status: :unauthorized
     end
