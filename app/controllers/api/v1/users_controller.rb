@@ -5,14 +5,14 @@ class Api::V1::UsersController < ApplicationController
   before_action :check_admin, only: [ :destroy ]
 
   def index
-    @users = User.search(search_param)
+  @users = User.search(search_param).includes(:branches)
     @users = apply_status_filter(@users)
     @users = apply_sorting(@users)
     @users = @users.page(page_param).per(per_page_param)
 
     render json: {
       status: { code: 200, message: 'Users retrieved successfully.' },
-      data: @users.map { |user| Api::V1::UserSerializer.new(user, request: request).as_json },
+      data: @users.map { |user| Api::V1::UserSerializerMin.new(user, request: request).as_json },
       pagination: pagination(@users)
     }, status: :ok
   end
