@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_12_221047) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_21_164153) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pgcrypto"
@@ -43,6 +43,32 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_12_221047) do
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
   end
 
+  create_table "branches", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "name"
+    t.integer "branch_type"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "branches_users", id: false, force: :cascade do |t|
+    t.uuid "user_id", null: false
+    t.uuid "branch_id", null: false
+    t.index ["branch_id"], name: "index_branches_users_on_branch_id"
+    t.index ["user_id", "branch_id"], name: "index_branches_users_on_user_id_and_branch_id", unique: true
+  end
+
+  create_table "inventory_preferences", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "user_id", null: false
+    t.boolean "low_stock_alerts", default: true, null: false
+    t.integer "low_stock_threshold", default: 10, null: false
+    t.boolean "email_notifications", default: true, null: false
+    t.string "branches_to_show", default: ["all"], null: false, array: true
+    t.integer "default_items_per_page", default: 50, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_inventory_preferences_on_user_id"
+  end
+
   create_table "users", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "email", default: "", null: false
     t.string "encrypted_password", default: "", null: false
@@ -61,4 +87,5 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_12_221047) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "inventory_preferences", "users"
 end

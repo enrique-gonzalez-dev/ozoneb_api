@@ -9,6 +9,7 @@ Rails.application.routes.draw do
   # API routes
   namespace :api do
     namespace :v1 do
+      resources :branches, only: [:index, :show, :create]
       # Health check
       get 'health', to: 'health#index'
 
@@ -29,6 +30,9 @@ Rails.application.routes.draw do
         end
         collection do
           get :me
+          get :inventory_preferences
+          patch :update_inventory_preferences
+          put :update_inventory_preferences
         end
       end
 

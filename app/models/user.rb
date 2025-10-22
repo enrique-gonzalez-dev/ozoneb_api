@@ -15,8 +15,13 @@ class User < ApplicationRecord
   validates :last_name, presence: true
   validates :role, presence: true
 
+  after_commit :create_inventory_preferences, on: :create
+
+  has_and_belongs_to_many :branches
   # Active Storage for user avatar
   has_one_attached :avatar
+
+  has_one :inventory_preferences, dependent: :destroy
 
   # Avatar validation using custom method
   validate :avatar_validation
@@ -46,6 +51,10 @@ class User < ApplicationRecord
   end
 
   private
+
+  def create_inventory_preferences
+    create_inventory_preferences!
+  end
 
   def avatar_validation
     return unless avatar.attached?

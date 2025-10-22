@@ -25,4 +25,20 @@ class ApplicationController < ActionController::API
   def authenticate_user!
     authenticate_request
   end
+
+  def check_admin_or_supervisor
+    unless current_user&.can_create_users?
+      render json: {
+        status: { message: "You don't have permission to perform this action." }
+      }, status: :forbidden
+    end
+  end
+
+  def check_admin
+    unless current_user&.admin?
+      render json: {
+        status: { message: "You don't have permission to perform this action. Only admins can delete users." }
+      }, status: :forbidden
+    end
+  end
 end

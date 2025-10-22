@@ -33,6 +33,7 @@ class Api::V1::UsersController < ApplicationController
     @user = User.new(user_params_for_creation.except(:password, :password_confirmation))
     @user.password = temporary_password
     @user.password_confirmation = temporary_password
+    @user.branch_ids = params[:branches] if params[:branches].present?
 
     if @user.save
       # Send invitation email with temporary password
@@ -51,6 +52,8 @@ class Api::V1::UsersController < ApplicationController
 
   def update
     if @user == current_user || current_user.can_create_users?
+      @user.branch_ids = params[:branches] if params[:branches].present?
+
       if @user.update(user_params)
         render json: {
           status: { code: 200, message: 'User updated successfully.' },
@@ -83,14 +86,6 @@ class Api::V1::UsersController < ApplicationController
     else
       render json: {
         status: { message: "You don't have permission to delete users. Only admins can delete users." }
-      }, status: :forbidden
-    end
-  end
-  # Solo los administradores pueden eliminar usuarios
-  def check_admin
-    unless current_user&.admin?
-      render json: {
-        status: { message: "You don't have permission to perform this action. Only admins can delete users." }
       }, status: :forbidden
     end
   end
@@ -214,6 +209,38 @@ class Api::V1::UsersController < ApplicationController
     end
   end
 
+  def inventory_preferences
+    prefs = current_user.inventory_preferences
+    if prefs
+      render json: {
+        status: { code: 200, message: 'Inventory preferences retrieved successfully.' },
+        data: Api::V1::InventoryPreferencesSerializer.new(prefs).as_json
+      }, status: :ok
+    else
+      render json: {
+        status: { code: 404, message: 'Inventory preferences not found.' }
+      }, status: :not_found
+    end
+  end
+
+  def update_inventory_preferences
+    prefs = current_user.inventory_preferences || current_user.build_inventory_preferences
+    attrs = inventory_preferences_params.to_h
+    if attrs['branches_to_show']
+      attrs['branches_to_show'] = Array(attrs['branches_to_show']).map(&:to_s)
+    end
+    if prefs.update(attrs)
+      render json: {
+        status: { code: 200, message: 'Inventory preferences updated successfully.' },
+        data: Api::V1::InventoryPreferencesSerializer.new(prefs).as_json
+      }, status: :ok
+    else
+      render json: {
+        status: { code: 422, message: prefs.errors.full_messages.to_sentence }
+      }, status: :unprocessable_entity
+    end
+  end
+
   def me
     render json: {
       status: { code: 200, message: 'Current user retrieved successfully.' },
@@ -222,6 +249,10 @@ class Api::V1::UsersController < ApplicationController
   end
 
   private
+
+  def inventory_preferences_params
+    params.require(:inventory_preferences).permit(:low_stock_alerts, :low_stock_threshold, :email_notifications, :default_items_per_page, branches_to_show: [])
+  end
 
   def pagination(users)
     {
@@ -262,14 +293,6 @@ class Api::V1::UsersController < ApplicationController
 
   def password_params
     params.require(:user).permit(:current_password, :password, :password_confirmation)
-  end
-
-  def check_admin_or_supervisor
-    unless current_user&.can_create_users?
-      render json: {
-        status: { message: "You don't have permission to perform this action." }
-      }, status: :forbidden
-    end
   end
 
   # Pagination parameters

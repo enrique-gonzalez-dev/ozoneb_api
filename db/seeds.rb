@@ -14,7 +14,21 @@ admin_user = User.find_or_create_by!(email: 'admin@ozoneb.com') do |user|
   user.status = 'active'
 end
 
+
 puts "Created admin user: #{admin_user.email}" if admin_user.persisted?
+
+# Crear sucursales de ejemplo
+puts "Creando sucursales..."
+branch_data = [
+  ["Sucursal Centro", :production],
+  ["Sucursal Norte", :store_only],
+  ["Sucursal Sur", :production],
+  ["Sucursal Este", :store_only]
+]
+branches = branch_data.map do |name, type|
+  Branch.find_or_create_by!(name: name, branch_type: Branch.branch_types[type])
+end
+puts "Sucursales creadas: #{branches.map(&:name).join(', ')}"
 
 # Create 20 sample users
 puts "Creating 20 sample users..."
@@ -34,6 +48,7 @@ last_names = %w[
 roles = [ :admin, :supervisor, :operation ]
 statuses = [ :active, :inactive ]
 
+
 20.times do |i|
   name = names.sample
   last_name = last_names.sample
@@ -48,6 +63,9 @@ statuses = [ :active, :inactive ]
     u.status = statuses.sample
   end
 
+  # Asignar sucursales aleatorias al usuario (1 a todas)
+  user.branches = branches.sample(rand(1..branches.size))
+  user.save!
   print "."
 end
 
