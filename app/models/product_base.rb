@@ -1,0 +1,2 @@
+class ProductBase < InventoryItem
+end

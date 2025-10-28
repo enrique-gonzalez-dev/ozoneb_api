@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_21_164153) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_22_211526) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pgcrypto"
@@ -55,6 +55,35 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_21_164153) do
     t.uuid "branch_id", null: false
     t.index ["branch_id"], name: "index_branches_users_on_branch_id"
     t.index ["user_id", "branch_id"], name: "index_branches_users_on_user_id_and_branch_id", unique: true
+  end
+
+  create_table "categories", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "name"
+    t.text "description"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "categories_products", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "category_id"
+    t.uuid "product_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["category_id", "product_id"], name: "index_categories_products_on_category_and_product", unique: true
+    t.index ["category_id"], name: "index_categories_products_on_category_id"
+    t.index ["product_id"], name: "index_categories_products_on_product_id"
+  end
+
+  create_table "inventory_items", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "name"
+    t.string "identifier"
+    t.text "comment"
+    t.string "unit"
+    t.string "type"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index "lower((identifier)::text)", name: "index_inventory_items_on_lower_identifier", unique: true
+    t.index ["identifier"], name: "index_inventory_items_on_identifier"
   end
 
   create_table "inventory_preferences", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|

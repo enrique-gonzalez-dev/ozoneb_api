@@ -38,6 +38,14 @@ Rails.application.routes.draw do
 
       # Current user endpoint
       get 'current_user', to: 'users#me'
+
+  # Inventory endpoints (index only for each type)
+  resources :products, only: [:index]
+  resources :product_bases, only: [:index]
+  resources :containers, only: [:index]
+  resources :labels, only: [:index]
+  resources :categories, only: [:index, :create, :destroy, :update]
+  resources :raw_materials, only: [:index]
     end
   end
 end

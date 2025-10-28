@@ -1,0 +1,2 @@
+class RawMaterial < InventoryItem
+end
