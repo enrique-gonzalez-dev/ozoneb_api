@@ -28,8 +28,9 @@ class Api::V1::LabelsController < ApplicationController
 
   def apply_filters(scope)
     scope = scope.all
-    if params[:category_id].present?
-      scope = scope.joins('JOIN categories_products ON categories_products.product_id = inventory_items.id').where('categories_products.category_id = ?', params[:category_id])
+
+    if params[:category_id].present? && scope.respond_to?(:reflect_on_association) && scope.reflect_on_association(:categories)
+      scope = scope.joins(:categories).where(categories: { id: params[:category_id] })
     end
     if params[:name].present?
       scope = scope.where('name ILIKE ?', "%#{params[:name]}%")

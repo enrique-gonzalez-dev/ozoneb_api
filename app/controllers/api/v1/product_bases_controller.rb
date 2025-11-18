@@ -27,9 +27,19 @@ class Api::V1::ProductBasesController < ApplicationController
   private
 
   def apply_filters(scope)
-    scope = scope.all
-    if params[:category_id].present?
-      scope = scope.joins('JOIN categories_products ON categories_products.product_id = inventory_items.id').where('categories_products.category_id = ?', params[:category_id])
+    # Eager-load item_components + their polymorphic component to avoid N+1 when serializing
+    includes_args = [item_components: :component]
+
+    # Only include/join categories when the model actually declares the association
+    if scope.respond_to?(:reflect_on_association) && scope.reflect_on_association(:categories)
+      includes_args.unshift(:categories)
+    end
+
+    scope = scope.includes(*includes_args)
+
+    if params[:category_id].present? && scope.respond_to?(:reflect_on_association) && scope.reflect_on_association(:categories)
+      # Use ActiveRecord joins to filter by category only for models that have the association
+      scope = scope.joins(:categories).where(categories: { id: params[:category_id] })
     end
     if params[:name].present?
       scope = scope.where('name ILIKE ?', "%#{params[:name]}%")

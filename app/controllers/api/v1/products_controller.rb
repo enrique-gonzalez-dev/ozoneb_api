@@ -24,7 +24,13 @@ class Api::V1::ProductsController < ApplicationController
   private
 
   def apply_filters(scope)
+    # Eager-load categories and item_components + their polymorphic component to avoid N+1.
+    # Use `preload` for the polymorphic association to prevent ActiveRecord converting
+    # the includes into an eager_load (JOIN) which raises
+    # ActiveRecord::EagerLoadPolymorphicError for polymorphic associations.
     scope = scope.includes(:categories)
+    scope = scope.preload(item_components: :component)
+
     # Support filtering by one or many category ids. Accepts:
     # - ?category_ids=1,2,3
     # - ?category_ids[]=1&category_ids[]=2
@@ -32,14 +38,10 @@ class Api::V1::ProductsController < ApplicationController
     category_param = params[:category_ids] || params[:category_id]
     if category_param.present?
       ids = category_param.is_a?(String) ? category_param.split(',') : Array(category_param)
-      ids = ids.map(&:to_i).reject(&:zero?)
       scope = scope.joins(:categories).where(categories: { id: ids }).distinct
     end
     if params[:name].present?
-      scope = scope.where('name ILIKE ?', "%#{params[:name]}%")
-    end
-    if params[:identifier].present?
-      scope = scope.where('identifier ILIKE ?', "%#{params[:identifier]}%")
+      scope = scope.where('name ILIKE ? OR identifier ILIKE ?', "%#{params[:name]}%", "%#{params[:name]}%")
     end
 
     # Sorting

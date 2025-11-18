@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_22_211526) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_29_091043) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pgcrypto"
@@ -96,6 +96,21 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_22_211526) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["user_id"], name: "index_inventory_preferences_on_user_id"
+  end
+
+  create_table "item_components", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "owner_type", null: false
+    t.uuid "owner_id", null: false
+    t.string "component_type", null: false
+    t.uuid "component_id", null: false
+    t.decimal "quantity", precision: 12, scale: 4, default: "0.0", null: false
+    t.string "unit"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["component_type", "component_id"], name: "index_item_components_on_component"
+    t.index ["component_type", "component_id"], name: "index_item_components_on_component_type_and_component_id"
+    t.index ["owner_type", "owner_id"], name: "index_item_components_on_owner"
+    t.index ["owner_type", "owner_id"], name: "index_item_components_on_owner_type_and_owner_id"
   end
 
   create_table "users", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|

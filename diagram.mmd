@@ -1,0 +1,110 @@
+%% Diagrama de clases (Mermaid) para ozoneb_api
+%% Generado el 30-10-2025
+
+classDiagram
+    %% Clases principales (STI)
+    class InventoryItem {
+      <<STI>>
+      +id
+      +name
+      +identifier
+      +unit
+    }
+
+    class Product
+    class ProductBase
+    class Container
+    class Label
+    class RawMaterial
+
+    Product --|> InventoryItem
+    ProductBase --|> InventoryItem
+    Container --|> InventoryItem
+    Label --|> InventoryItem
+    RawMaterial --|> InventoryItem
+
+    %% ItemComponent (relación polimórfica)
+    class ItemComponent {
+      +id
+      +owner_type
+      +owner_id
+      +component_type
+      +component_id
+      +quantity
+      +unit
+    }
+
+    %% Relaciones owner -> item_components
+    Product "1" -- "*" ItemComponent : owns
+    ProductBase "1" -- "*" ItemComponent : owns
+
+    %% Relaciones component <- item_components (component polymórfico)
+    ItemComponent "*" -- "1" Label : component
+    ItemComponent "*" -- "1" Container : component
+    ItemComponent "*" -- "1" ProductBase : component
+    ItemComponent "*" -- "1" RawMaterial : component
+
+    %% Relaciones through (convenience associations en modelos)
+    Product "1" -- "*" Label : has_many through ItemComponent
+    Product "1" -- "*" Container : has_many through ItemComponent
+    Product "1" -- "*" ProductBase : has_many through ItemComponent
+    Product "1" -- "*" RawMaterial : has_many through ItemComponent
+
+    ProductBase "1" -- "*" Label : has_many through ItemComponent
+    ProductBase "1" -- "*" Container : has_many through ItemComponent
+    ProductBase "1" -- "*" RawMaterial : has_many through ItemComponent
+
+    %% HABTM: Products <-> Categories
+    class Category {
+      +id
+      +name
+    }
+    Product "*" -- "*" Category : categories_products (join table)
+
+    %% Users, Branches y preferencias
+    class User {
+      +id (uuid)
+      +name
+      +last_name
+      +email
+      +role
+      +status
+    }
+    class Branch {
+      +id
+      +name
+      +branch_type
+    }
+    User "*" -- "*" Branch : users_branches (join table)
+
+    class InventoryPreferences {
+      +id
+      +user_id
+      +low_stock_alerts
+      +low_stock_threshold
+      +email_notifications
+      +branches_to_show
+      +default_items_per_page
+    }
+    User "1" -- "1" InventoryPreferences : has_one
+
+    %% ActiveStorage (adjunto de avatar en User)
+    class ActiveStorage_Attachment {
+      +id
+      +name
+    }
+  User "1" -- "*" ActiveStorage_Attachment : has_one_attached_avatar
+
+    %% Notas
+    %% ItemComponent es polimórfico: owner puede ser Product o ProductBase
+    %% component puede ser Label, Container, ProductBase, RawMaterial
+
+    note right of ItemComponent
+      ItemComponent es polimórfico.
+      owner_type/owner_id => referencia a quien posee el componente (Product, ProductBase).
+      component_type/component_id => referencia al inventariable usado como componente.
+    end note
+
+    note left of Product
+      Product y ProductBase usan la tabla inventory_items mediante STI.
+    end note

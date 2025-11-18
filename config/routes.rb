@@ -35,15 +35,20 @@ Rails.application.routes.draw do
           put :update_inventory_preferences
         end
       end
-
-      # Current user endpoint
       get 'current_user', to: 'users#me'
 
-  # Inventory endpoints (index only for each type)
   resources :products, only: [:index]
   resources :product_bases, only: [:index]
   resources :containers, only: [:index]
   resources :labels, only: [:index]
+
+  # Hybrid routes: named resource routes that delegate to InventoryItemsController
+  # Provide named helpers per STI type while keeping index routes in their own controllers.
+  resources :products,      controller: 'inventory_items', defaults: { type: 'Product' }, only: [:create, :update, :destroy]
+  resources :product_bases, controller: 'inventory_items', defaults: { type: 'ProductBase' }, only: [:create, :update, :destroy]
+  resources :containers,    controller: 'inventory_items', defaults: { type: 'Container' }, only: [:create, :update, :destroy]
+  resources :labels,        controller: 'inventory_items', defaults: { type: 'Label' }, only: [:create, :update, :destroy]
+  resources :raw_materials, controller: 'inventory_items', defaults: { type: 'RawMaterial' }, only: [:create, :update, :destroy]
   resources :categories, only: [:index, :create, :destroy, :update]
   resources :raw_materials, only: [:index]
     end
