@@ -18,8 +18,14 @@ class Api::V1::ProductBasesController < ApplicationController
     response.set_header('X-Total-Count', paginated.total_count)
     response.set_header('X-Total-Pages', paginated.total_pages)
 
+    branches_to_show = user_branches_to_show
+
     render json: {
-      product_bases: ActiveModelSerializers::SerializableResource.new(paginated, each_serializer: Api::V1::ProductBaseSerializer),
+      product_bases: ActiveModelSerializers::SerializableResource.new(
+        paginated, 
+        each_serializer: Api::V1::ProductBaseSerializer,
+        branches_to_show: branches_to_show
+      ),
       meta: meta
     }
   end
@@ -36,6 +42,8 @@ class Api::V1::ProductBasesController < ApplicationController
     end
 
     scope = scope.includes(*includes_args)
+    # Preload inventory_item_branches with branch to avoid N+1 queries
+    scope = scope.preload(inventory_item_branches: :branch)
 
     if params[:category_id].present? && scope.respond_to?(:reflect_on_association) && scope.reflect_on_association(:categories)
       # Use ActiveRecord joins to filter by category only for models that have the association

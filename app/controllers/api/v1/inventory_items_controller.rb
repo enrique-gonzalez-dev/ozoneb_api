@@ -37,16 +37,22 @@ class Api::V1::InventoryItemsController < ApplicationController
     begin
       InventoryItem.transaction do
         # components is handled separately by `process_components` below
-        permitted = inventory_item_params.except(:type, :components)
+        permitted = inventory_item_params.except(:type, :components, :inventory)
         @inventory_item.update!(permitted)
         # replace components atomically if provided
         if params.dig(:inventory_item, :components).present?
           @inventory_item.replace_components(params[:inventory_item][:components])
         end
+        # update inventory_item_branch data if provided
+        if params.dig(:inventory_item, :inventory).present?
+          update_inventory_item_branches
+        end
       end
       render json: @inventory_item
     rescue ActiveRecord::RecordInvalid => e
       render json: { errors: e.record.errors.full_messages }, status: :unprocessable_entity
+    rescue ActiveRecord::RecordNotFound => e
+      render json: { error: 'Branch not found' }, status: :not_found
     end
   end
 
@@ -85,10 +91,37 @@ class Api::V1::InventoryItemsController < ApplicationController
     item.categories = categories
   end
 
+  def update_inventory_item_branches
+    inventory_data = params[:inventory_item][:inventory]
+    inventory_array = Array(inventory_data)
+
+    inventory_array.each do |inv_params|
+      branch_id = inv_params[:branch] || inv_params['branch']
+      next unless branch_id.present?
+
+      branch = Branch.find(branch_id)
+      inventory_item_branch = @inventory_item.inventory_item_branches.find_or_initialize_by(branch: branch)
+
+      branch_params = {}
+      branch_params[:stock] = inv_params[:stock] || inv_params['stock'] if (inv_params[:stock] || inv_params['stock']).present?
+      branch_params[:safe_stock] = inv_params[:safe_stock] || inv_params['safe_stock'] if (inv_params[:safe_stock] || inv_params['safe_stock']).present?
+      branch_params[:time_to_warning] = inv_params[:time_to_warning] || inv_params['time_to_warning'] if (inv_params[:time_to_warning] || inv_params['time_to_warning']).present?
+      branch_params[:entry] = inv_params[:entry] || inv_params['entry'] if (inv_params[:entry] || inv_params['entry']).present?
+      branch_params[:output] = inv_params[:output] || inv_params['output'] if (inv_params[:output] || inv_params['output']).present?
+
+      inventory_item_branch.update!(branch_params) if branch_params.any?
+    end
+  end
+
   # Permit typical inventory item attributes. Include `type` to support STI
   # subclasses (Product, Label, ProductBase, Container, RawMaterial) when needed.
   def inventory_item_params
-    params.require(:inventory_item).permit(:name, :identifier, :unit, :quantity, :location, :price, :sku, :description, :type, category_ids: [], components: [:id, :quantity])
+    params.require(:inventory_item).permit(
+      :name, :identifier, :unit, :quantity, :location, :price, :sku, :description, :type,
+      category_ids: [],
+      components: [:id, :quantity],
+      inventory: [[:branch, :stock, :safe_stock, :time_to_warning, :entry, :output]]
+    )
   end
 
   # Components management delegated to InventoryItem#replace_components

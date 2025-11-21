@@ -12,6 +12,13 @@ class InventoryItem < ApplicationRecord
   # insensitively by an index on lower(identifier).
   before_validation :normalize_identifier
 
+  # Callback para crear registros en inventory_item_branches para todas las sucursales
+  after_create :create_inventory_item_branches_for_all_branches
+
+  # Relación con branches a través de inventory_item_branches
+  has_many :inventory_item_branches, dependent: :destroy
+  has_many :branches, through: :inventory_item_branches
+
   # Polymorphic item components relations
   # An InventoryItem (owner) can have many item_components (its components)
   has_many :item_components, as: :owner, dependent: :destroy, inverse_of: :owner
@@ -60,5 +67,18 @@ class InventoryItem < ApplicationRecord
 
   def normalize_identifier
     self.identifier = identifier.to_s.strip.presence
+  end
+
+  def create_inventory_item_branches_for_all_branches
+    Branch.find_each do |branch|
+      inventory_item_branches.create!(
+        branch: branch,
+        stock: 0,
+        safe_stock: 0,
+        time_to_warning: 0,
+        entry: 0,
+        output: 0
+      )
+    end
   end
 end

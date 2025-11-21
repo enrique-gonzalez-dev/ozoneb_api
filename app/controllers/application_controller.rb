@@ -41,4 +41,10 @@ class ApplicationController < ActionController::API
       }, status: :forbidden
     end
   end
+
+  # Obtiene los IDs de branches que el usuario tiene configurados en sus inventory_preferences
+  def user_branches_to_show
+    return [] unless current_user&.inventory_preferences
+    current_user.inventory_preferences.branches_to_show || []
+  end
 end

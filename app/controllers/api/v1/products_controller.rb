@@ -15,8 +15,14 @@ class Api::V1::ProductsController < ApplicationController
       per_page: paginated.limit_value
     }
 
+    branches_to_show = user_branches_to_show
+
     render json: {
-      products: ActiveModelSerializers::SerializableResource.new(paginated, each_serializer: Api::V1::ProductSerializer),
+      products: ActiveModelSerializers::SerializableResource.new(
+        paginated, 
+        each_serializer: Api::V1::ProductSerializer,
+        branches_to_show: branches_to_show
+      ),
       meta: meta
     }
   end
@@ -30,6 +36,8 @@ class Api::V1::ProductsController < ApplicationController
     # ActiveRecord::EagerLoadPolymorphicError for polymorphic associations.
     scope = scope.includes(:categories)
     scope = scope.preload(item_components: :component)
+    # Preload inventory_item_branches with branch to avoid N+1 queries
+    scope = scope.preload(inventory_item_branches: :branch)
 
     # Support filtering by one or many category ids. Accepts:
     # - ?category_ids=1,2,3

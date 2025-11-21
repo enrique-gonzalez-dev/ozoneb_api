@@ -1,5 +1,5 @@
 class Api::V1::ProductSerializer < ActiveModel::Serializer
-  attributes :id, :name, :identifier, :comment, :unit, :type, :categories, :components
+  attributes :id, :name, :identifier, :comment, :unit, :type, :categories, :components, :inventory
 
   def categories
     object.categories.map do |category|
@@ -32,6 +32,25 @@ class Api::V1::ProductSerializer < ActiveModel::Serializer
         quantity: ic.quantity.to_s,
         unit: ic.unit,
         name: ic.component&.name
+      }
+    end
+  end
+
+  # Return inventory_item_branches filtered by user's branches_to_show
+  def inventory
+    branches_to_show = instance_options[:branches_to_show] || []
+    return [] if branches_to_show.empty?
+
+    object.inventory_item_branches.select { |iib| branches_to_show.include?(iib.branch_id) }.map do |iib|
+      {
+        id: iib.id,
+        branch_id: iib.branch_id,
+        branch_name: iib.branch.name,
+        stock: iib.stock,
+        safe_stock: iib.safe_stock,
+        time_to_warning: iib.time_to_warning,
+        entry: iib.entry,
+        output: iib.output
       }
     end
   end

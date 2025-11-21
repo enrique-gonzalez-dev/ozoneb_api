@@ -18,8 +18,14 @@ class Api::V1::LabelsController < ApplicationController
     response.set_header('X-Total-Count', paginated.total_count)
     response.set_header('X-Total-Pages', paginated.total_pages)
 
+    branches_to_show = user_branches_to_show
+
     render json: {
-      labels: ActiveModelSerializers::SerializableResource.new(paginated, each_serializer: Api::V1::LabelSerializer),
+      labels: ActiveModelSerializers::SerializableResource.new(
+        paginated, 
+        each_serializer: Api::V1::LabelSerializer,
+        branches_to_show: branches_to_show
+      ),
       meta: meta
     }
   end
@@ -28,6 +34,8 @@ class Api::V1::LabelsController < ApplicationController
 
   def apply_filters(scope)
     scope = scope.all
+    # Preload inventory_item_branches with branch to avoid N+1 queries
+    scope = scope.preload(inventory_item_branches: :branch)
 
     if params[:category_id].present? && scope.respond_to?(:reflect_on_association) && scope.reflect_on_association(:categories)
       scope = scope.joins(:categories).where(categories: { id: params[:category_id] })
