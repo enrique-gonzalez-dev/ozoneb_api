@@ -88,6 +88,8 @@ production:
     database: ozoneb_api_production
     username: ozoneb_user
     password: <%= ENV["OZONEB_API_DATABASE_PASSWORD"] %>
+    host: localhost
+    port: 5432
   cache:
     <<: *primary_production
     database: ozoneb_api_production_cache
