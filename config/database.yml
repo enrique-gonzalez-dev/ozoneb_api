@@ -86,7 +86,7 @@ production:
   primary: &primary_production
     <<: *default
     database: ozoneb_api_production
-    username: ozoneb_api
+    username: ozoneb_user
     password: <%= ENV["OZONEB_API_DATABASE_PASSWORD"] %>
   cache:
     <<: *primary_production

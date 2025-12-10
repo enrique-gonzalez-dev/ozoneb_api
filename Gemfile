@@ -46,6 +46,15 @@ gem 'rack-cors'
 # Pagination
 gem 'kaminari'
 
+group :development do
+  # Capistrano for deployments (local dev/ops tooling)
+  gem 'capistrano', '>= 3.17'
+  gem 'capistrano-rails'
+  gem 'capistrano-rbenv'
+  gem 'capistrano-bundler'
+  gem 'capistrano3-puma'
+end
+
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem 'debug', platforms: %i[ mri windows ], require: 'debug/prelude'

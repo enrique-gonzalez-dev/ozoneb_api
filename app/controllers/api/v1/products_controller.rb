@@ -59,6 +59,9 @@ class Api::V1::ProductsController < ApplicationController
       if %w[name identifier].include?(column)
         scope = scope.order(column => direction)
       end
+    else
+      # Default ordering for inventory indexes
+      scope = scope.order(created_at: :desc)
     end
 
     scope

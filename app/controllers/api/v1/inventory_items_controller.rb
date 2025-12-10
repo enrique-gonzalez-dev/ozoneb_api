@@ -117,10 +117,10 @@ class Api::V1::InventoryItemsController < ApplicationController
   # subclasses (Product, Label, ProductBase, Container, RawMaterial) when needed.
   def inventory_item_params
     params.require(:inventory_item).permit(
-      :name, :identifier, :unit, :quantity, :location, :price, :sku, :description, :type,
+      :name, :identifier, :unit, :comment,
       category_ids: [],
       components: [:id, :quantity],
-      inventory: [[:branch, :stock, :safe_stock, :time_to_warning, :entry, :output]]
+      inventory: [:branch, :stock, :safe_stock, :time_to_warning, :entry, :output]
     )
   end
 
