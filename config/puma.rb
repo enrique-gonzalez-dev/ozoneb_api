@@ -28,9 +28,15 @@ threads_count = ENV.fetch('RAILS_MAX_THREADS', 3)
 threads threads_count, threads_count
 
 # Specifies the `port` that Puma will listen on to receive requests; default is 3000.
-# In production, use Unix socket instead of TCP port
+# In production, use Unix socket for Nginx, or TCP port for Cloudflare Tunnel
 if ENV['RAILS_ENV'] == 'production'
-  bind 'unix:///var/www/ozoneb_api/shared/tmp/sockets/puma.sock'
+  if ENV['USE_CLOUDFLARE_TUNNEL']
+    # Bind to TCP port for Cloudflare Tunnel
+    bind 'tcp://0.0.0.0:3000'
+  else
+    # Use Unix socket for Nginx
+    bind 'unix:///var/www/ozoneb_api/shared/tmp/sockets/puma.sock'
+  end
 else
   port ENV.fetch('PORT', 3000)
 end
