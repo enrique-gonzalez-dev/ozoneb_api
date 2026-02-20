@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_19_135808) do
+ActiveRecord::Schema[8.0].define(version: 2025_12_26_052428) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pgcrypto"
@@ -113,6 +113,29 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_19_135808) do
     t.index ["user_id"], name: "index_inventory_preferences_on_user_id"
   end
 
+  create_table "inventory_transaction_items", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "inventory_transaction_id", null: false
+    t.uuid "inventory_item_id", null: false
+    t.decimal "quantity", precision: 10, scale: 2, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["inventory_item_id"], name: "index_inventory_transaction_items_on_inventory_item_id"
+    t.index ["inventory_transaction_id", "inventory_item_id"], name: "index_inv_trans_items_on_trans_and_item", unique: true
+    t.index ["inventory_transaction_id"], name: "index_inventory_transaction_items_on_inventory_transaction_id"
+  end
+
+  create_table "inventory_transactions", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.integer "transaction_type"
+    t.integer "transaction_subtype"
+    t.text "note"
+    t.uuid "user_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.uuid "branch_id", null: false
+    t.index ["branch_id"], name: "index_inventory_transactions_on_branch_id"
+    t.index ["user_id"], name: "index_inventory_transactions_on_user_id"
+  end
+
   create_table "item_components", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "owner_type", null: false
     t.uuid "owner_id", null: false
@@ -149,4 +172,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_19_135808) do
   add_foreign_key "inventory_item_branches", "branches"
   add_foreign_key "inventory_item_branches", "inventory_items"
   add_foreign_key "inventory_preferences", "users"
+  add_foreign_key "inventory_transaction_items", "inventory_items"
+  add_foreign_key "inventory_transaction_items", "inventory_transactions"
+  add_foreign_key "inventory_transactions", "branches"
+  add_foreign_key "inventory_transactions", "users"
 end

@@ -22,7 +22,7 @@ class InventoryItem < ApplicationRecord
   # Polymorphic item components relations
   # An InventoryItem (owner) can have many item_components (its components)
   has_many :item_components, as: :owner, dependent: :destroy, inverse_of: :owner
-  has_many :components, through: :item_components, source: :component
+  has_many :components, through: :item_components, source: :component, source_type: 'InventoryItem'
 
   # As a component used by other owners
   # When an InventoryItem that is used as a component is removed,

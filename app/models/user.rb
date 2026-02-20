@@ -22,6 +22,7 @@ class User < ApplicationRecord
   has_one_attached :avatar
 
   has_one :inventory_preferences, dependent: :destroy
+  has_many :inventory_transactions, dependent: :destroy
 
   # Avatar validation using custom method
   validate :avatar_validation

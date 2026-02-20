@@ -51,6 +51,9 @@ Rails.application.routes.draw do
   resources :raw_materials, controller: 'inventory_items', defaults: { type: 'RawMaterial' }, only: [:create, :update, :destroy]
   resources :categories, only: [:index, :create, :destroy, :update]
   resources :raw_materials, only: [:index]
+
+  # Inventory transactions routes
+  resources :inventory_transactions, only: [:index, :show, :create, :update, :destroy]
     end
   end
 end
