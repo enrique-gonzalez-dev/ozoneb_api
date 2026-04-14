@@ -1,4 +1,4 @@
-class Label < InventoryItem
+class SkuCode < InventoryItem
   has_many :item_components, as: :owner, dependent: :destroy
 
   has_many :labels, through: :item_components, source: :component, source_type: 'Label'

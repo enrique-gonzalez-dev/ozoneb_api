@@ -1,4 +1,4 @@
-class Api::V1::LabelSerializer < ActiveModel::Serializer
+class Api::V1::SkuCodeSerializer < ActiveModel::Serializer
   attributes :id, :name, :identifier, :unit, :type, :comment, :components, :inventory
 
   # Return components with their referenced object and quantity/unit

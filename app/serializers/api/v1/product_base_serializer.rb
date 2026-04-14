@@ -3,7 +3,7 @@ class Api::V1::ProductBaseSerializer < ActiveModel::Serializer
 
   # Return composition for ProductBase: item_components with nested component payload
   def components
-    object.item_components.map do |ic|
+    ItemComponent.where(owner_id: object.id, owner_type: object.class.to_s).map do |ic|
       comp = ic.component
       component_payload = if comp
         serializer_name = "Api::V1::#{ic.component_type}Serializer"

@@ -1,6 +1,6 @@
 class InventoryItem < ApplicationRecord
   # InventoryItem is the STI base class. Do not mark it as abstract so
-  # subclasses (Product, ProductBase, Container, Label, RawMaterial)
+  # subclasses (Product, ProductBase, Container, Label, RawMaterial, SkuCode)
   # will use the `inventory_items` table.
   validates :name, presence: true
   validates :identifier, presence: true, uniqueness: { case_sensitive: false }
@@ -22,7 +22,11 @@ class InventoryItem < ApplicationRecord
   # Polymorphic item components relations
   # An InventoryItem (owner) can have many item_components (its components)
   has_many :item_components, as: :owner, dependent: :destroy, inverse_of: :owner
-  has_many :components, through: :item_components, source: :component, source_type: 'InventoryItem'
+
+  # Method to get all components regardless of type
+  def components
+    item_components.map(&:component)
+  end
 
   # As a component used by other owners
   # When an InventoryItem that is used as a component is removed,
@@ -38,7 +42,7 @@ class InventoryItem < ApplicationRecord
   # Raises ActiveRecord::RecordInvalid with errors attached to self when validation fails.
   def replace_components(components_param)
     comps = Array(components_param).map do |c|
-      { id: (c[:id] || c['id']), quantity: (c[:quantity] || c['quantity'] || 0) }
+      { id: (c[:id] || c['id'] || c[:component_id] || c['component_id']), quantity: (c[:quantity] || c['quantity'] || 0) }
     end
 
     ids = comps.map { |c| c[:id] }.compact
@@ -54,11 +58,24 @@ class InventoryItem < ApplicationRecord
 
     transaction do
       # remove existing relations and create new ones
-      item_components.destroy_all
+      # Use SQL delete to ensure we match the correct owner_type (not just the base class)
+      ItemComponent.where(owner_id: self.id, owner_type: self.class.to_s).delete_all
       comps.each do |c|
         component = found[c[:id]]
         next unless component
-        item_components.create!(component: component, quantity: c[:quantity])
+        # Create ItemComponent with explicit owner assignment
+        item_component_attrs = {
+          owner_id: self.id,
+          owner_type: self.class.to_s,
+          component_id: component.id,
+          component_type: component.class.to_s,
+          quantity: c[:quantity]
+        }
+        ic = ItemComponent.create(item_component_attrs)
+        unless ic.persisted?
+          errors.add(:components, "Failed to add component #{component.name}: #{ic.errors.full_messages.join(', ')}")
+          raise ActiveRecord::RecordInvalid.new(self)
+        end
       end
     end
   end

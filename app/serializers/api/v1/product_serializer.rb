@@ -13,7 +13,7 @@ class Api::V1::ProductSerializer < ActiveModel::Serializer
   # Return components with their referenced object and quantity/unit
   # Expected shape: [{ item_component_id, component_type, component_id, component: { id, name, identifier, unit, type }, quantity, unit }]
   def components
-    object.item_components.map do |ic|
+    ItemComponent.where(owner_id: object.id, owner_type: object.class.to_s).map do |ic|
       comp = ic.component
       component_payload = if comp
         # Choose a serializer dynamically based on component_type; fall back to compact InventoryItemSerializer

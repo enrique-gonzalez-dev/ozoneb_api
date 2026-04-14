@@ -15,8 +15,9 @@ class Api::V1::InventoryItemsController < ApplicationController
       InventoryItem.transaction do
         item.save!
         # attach components atomically if provided
-        if params.dig(:inventory_item, :components).present?
-          item.replace_components(params[:inventory_item][:components])
+        item_params = get_resource_params
+        if item_params.dig(:components).present?
+          item.replace_components(item_params[:components])
         end
       end
       render json: item, status: :created
@@ -27,32 +28,37 @@ class Api::V1::InventoryItemsController < ApplicationController
 
   # PATCH/PUT /api/v1/inventory_items/:id
   def update
-    # Prevent changing `type` on update. If route provides `type`, ensure it matches existing record.
-    if params[:type].present? && @inventory_item.type != params[:type]
-      return render json: { error: 'Type mismatch' }, status: :unprocessable_entity
-    end
-
+    # Note: `type` cannot be changed on update (it's excluded in inventory_item_params)
     assign_categories(@inventory_item) if @inventory_item.type == 'Product'
 
     begin
       InventoryItem.transaction do
-        # components is handled separately by `process_components` below
+        # components is handled separately
         permitted = inventory_item_params.except(:type, :components, :inventory)
         @inventory_item.update!(permitted)
         # replace components atomically if provided
-        if params.dig(:inventory_item, :components).present?
-          @inventory_item.replace_components(params[:inventory_item][:components])
+        item_params = get_resource_params
+        if item_params.dig(:components).present?
+          @inventory_item.replace_components(item_params[:components])
         end
         # update inventory_item_branch data if provided
-        if params.dig(:inventory_item, :inventory).present?
+        if item_params.dig(:inventory).present?
           update_inventory_item_branches
         end
       end
+      # Reload to ensure fresh state after transaction
+      @inventory_item.reload
       render json: @inventory_item
     rescue ActiveRecord::RecordInvalid => e
-      render json: { errors: e.record.errors.full_messages }, status: :unprocessable_entity
+      error_messages = e.record.errors.full_messages
+      Rails.logger.error("RecordInvalid error: #{error_messages.inspect}")
+      render json: { errors: error_messages }, status: :unprocessable_entity
     rescue ActiveRecord::RecordNotFound => e
       render json: { error: 'Branch not found' }, status: :not_found
+    rescue => e
+      Rails.logger.error("Unexpected error updating inventory item: #{e.class} - #{e.message}")
+      Rails.logger.error(e.backtrace.first(10).join("\n"))
+      render json: { error: "#{e.class}: #{e.message}" }, status: :unprocessable_entity
     end
   end
 
@@ -92,7 +98,8 @@ class Api::V1::InventoryItemsController < ApplicationController
   end
 
   def update_inventory_item_branches
-    inventory_data = params[:inventory_item][:inventory]
+    item_params = get_resource_params
+    inventory_data = item_params[:inventory]
     inventory_array = Array(inventory_data)
 
     inventory_array.each do |inv_params|
@@ -113,13 +120,33 @@ class Api::V1::InventoryItemsController < ApplicationController
     end
   end
 
+  # Get the resource params by finding the correct key (sku_code, product, raw_material, etc.)
+  # This handles both direct inventory_item_params and resource-specific params
+  def get_resource_params
+    @resource_params ||= begin
+      # List of possible resource parameter keys
+      resource_keys = %w[sku_code product raw_material product_base container label inventory_item]
+      param_key = resource_keys.find { |k| params[k].present? }
+      
+      if param_key
+        params[param_key]
+      else
+        {}
+      end
+    end
+  end
+
   # Permit typical inventory item attributes. Include `type` to support STI
-  # subclasses (Product, Label, ProductBase, Container, RawMaterial) when needed.
+  # subclasses (Product, Label, ProductBase, Container, RawMaterial, SkuCode) when needed.
   def inventory_item_params
-    params.require(:inventory_item).permit(
-      :name, :identifier, :unit, :comment,
+    # Find which resource parameter is being used (sku_code, product, raw_material, etc.)
+    resource_keys = %w[sku_code product raw_material product_base container label inventory_item]
+    param_key = resource_keys.find { |k| params[k].present? } || :inventory_item
+    
+    params.require(param_key).permit(
+      :name, :identifier, :unit, :comment, :description,
       category_ids: [],
-      components: [:id, :quantity],
+      components: [:id, :component_id, :component_type, :quantity, :unit, { component: [:id, :name, :type, :unit] }],
       inventory: [:branch, :stock, :safe_stock, :time_to_warning, :entry, :output]
     )
   end

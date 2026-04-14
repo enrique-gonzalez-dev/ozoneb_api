@@ -41,6 +41,7 @@ Rails.application.routes.draw do
   resources :product_bases, only: [:index]
   resources :containers, only: [:index]
   resources :labels, only: [:index]
+  resources :sku_codes, only: [:index]
 
   # Hybrid routes: named resource routes that delegate to InventoryItemsController
   # Provide named helpers per STI type while keeping index routes in their own controllers.
@@ -49,6 +50,7 @@ Rails.application.routes.draw do
   resources :containers,    controller: 'inventory_items', defaults: { type: 'Container' }, only: [:create, :update, :destroy]
   resources :labels,        controller: 'inventory_items', defaults: { type: 'Label' }, only: [:create, :update, :destroy]
   resources :raw_materials, controller: 'inventory_items', defaults: { type: 'RawMaterial' }, only: [:create, :update, :destroy]
+  resources :sku_codes,     controller: 'inventory_items', defaults: { type: 'SkuCode' }, only: [:create, :update, :destroy]
   resources :categories, only: [:index, :create, :destroy, :update]
   resources :raw_materials, only: [:index]
 

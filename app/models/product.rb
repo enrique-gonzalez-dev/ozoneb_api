@@ -12,6 +12,7 @@ class Product < InventoryItem
   has_many :containers, through: :item_components, source: :component, source_type: 'Container'
   has_many :product_bases, through: :item_components, source: :component, source_type: 'ProductBase'
   has_many :raw_materials, through: :item_components, source: :component, source_type: 'RawMaterial'
+  has_many :sku_codes, through: :item_components, source: :component, source_type: 'SkuCode'
   # Allow Products to contain other Products as components
   has_many :products, through: :item_components, source: :component, source_type: 'Product'
 end
